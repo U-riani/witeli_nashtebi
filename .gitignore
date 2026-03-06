@@ -1,79 +1,111 @@
-# ======================
+############################################
+# OS / System files
+############################################
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+############################################
 # Python
-# ======================
+############################################
+
 __pycache__/
 *.py[cod]
-*$py.class
 *.pyo
 *.pyd
 
-# ======================
-# Virtual environment
-# ======================
+*.so
+*.egg
+*.egg-info/
+.eggs/
+
+build/
+dist/
+
+.env
 .venv/
 venv/
 env/
-ENV/
 
-# ======================
-# Environment variables / secrets
-# ======================
-.env
-.env.*
-!.env.example
+pip-wheel-metadata/
 
-# ======================
-# IDE / Editor
-# ======================
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
+############################################
+# Python tooling
+############################################
 
-# ======================
-# Logs
-# ======================
-*.log
-
-# ======================
-# Python tooling / testing
-# ======================
 .pytest_cache/
 .mypy_cache/
-.ruff_cache/
 .coverage
+coverage.xml
 htmlcov/
-.tox/
-.nox/
 
-# ======================
-# Build / packaging
-# ======================
-build/
-dist/
-*.spec
-*.egg-info/
+############################################
+# FastAPI / backend runtime
+############################################
 
-# ======================
-# Jupyter
-# ======================
-.ipynb_checkpoints/
-
-# ======================
-# Project data folders
-# ======================
-data/
-output/
-reconciled/
-returned/
-uploads/
-temp/
-tmp/
-
-# ======================
-# Database files
-# ======================
-*.db
+*.log
 *.sqlite3
+
+############################################
+# Excel / Data files (VERY IMPORTANT FOR YOU)
+############################################
+
+backend/data/
+backend/output/
+backend/reconciled/
+backend/returned/
+
+*.xlsx
+*.xls
+*.csv
+
+
+############################################
+# Node / React
+############################################
+
+node_modules/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+############################################
+# Vite
+############################################
+
+frontend/dist/
+frontend/.vite/
+
+############################################
+# Frontend env
+############################################
+
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+############################################
+# IDE
+############################################
+
+.vscode/
+.idea/
+
+############################################
+# TypeScript / cache
+############################################
+
+*.tsbuildinfo
+
+############################################
+# Misc
+############################################
+
+*.tmp
+*.temp
+*.swp
+*.swo
