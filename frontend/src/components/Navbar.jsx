@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { branches } from "../data/branches";
 
 export default function Navbar() {
-
   const [selectedBranch, setSelectedBranch] = useState("");
 
   // Load saved branch on first load
@@ -21,14 +20,17 @@ export default function Navbar() {
   const handleBranchChange = (e) => {
     const branchId = e.target.value;
 
+    const branch = branches.find((b) => b.id.toString() === branchId);
+
     setSelectedBranch(branchId);
+
     localStorage.setItem("selectedBranch", branchId);
+    localStorage.setItem("selectedBranchData", JSON.stringify(branch));
   };
 
   return (
     <nav className="w-full bg-sky-300 text-slate-700">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-
         {/* Left side */}
         <Link
           to="/"
@@ -50,28 +52,18 @@ export default function Navbar() {
               {branch.name} ({branch.brand})
             </option>
           ))}
-
         </select>
 
         {/* Right side */}
         <div className="flex items-center gap-6 text-sm">
-
-          <Link
-            to="/"
-            className="text-slate-700 hover:text-white transition"
-          >
+          <Link to="/" className="text-slate-700 hover:text-white transition">
             Home
           </Link>
 
-          <a
-            href="#"
-            className="text-slate-700 hover:text-white transition"
-          >
+          <a href="#" className="text-slate-700 hover:text-white transition">
             Documentation
           </a>
-
         </div>
-
       </div>
     </nav>
   );
