@@ -68,6 +68,42 @@ export default function Admin() {
     }
   }
 
+  async function handleAutoAlign(file) {
+    try {
+      const { data } = supabase.storage
+        .from("inventory-results")
+        .getPublicUrl(file.path);
+
+      const response = await fetch(
+        "https://witeli-nashtebi.onrender.com/api/auto-align",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileUrl: data.publicUrl,
+          }),
+        },
+      );
+
+      if (!response.ok) throw new Error("Auto align failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "auto_align.xlsx";
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Auto align failed");
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-8">
       <h1 className="text-2xl font-semibold mb-6">
@@ -100,12 +136,18 @@ export default function Admin() {
                   {new Date(file.created).toLocaleString()}
                 </td>
 
-                <td className="p-3">
+                <td className="p-3 flex flex-col lg:flex-row gap-2">
                   <button
                     onClick={() => downloadFile(file.path)}
                     className="bg-sky-500 text-white px-3 py-1 rounded-md text-sm hover:bg-sky-600"
                   >
                     Download
+                  </button>
+                  <button
+                    onClick={() => handleAutoAlign(file)}
+                    className="text-nowrap bg-lime-500 text-white px-3 py-1 rounded-md text-sm hover:bg-lime-600"
+                  >
+                    Auto Align
                   </button>
                 </td>
               </tr>

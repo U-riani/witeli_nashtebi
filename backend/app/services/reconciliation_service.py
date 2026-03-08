@@ -47,6 +47,16 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     witeli_df = force_numeric(witeli_df, ["რაოდენობა"])
 
     # --------------------------------------------------
+    # Aggregate red stock (IMPORTANT FIX)
+    # --------------------------------------------------
+
+    witeli_df = (
+        witeli_df
+        .groupby("შტრიხკოდი", as_index=False)
+        .agg({"რაოდენობა": "sum"})
+    )
+
+    # --------------------------------------------------
     # Lookup tables
     # --------------------------------------------------
 
@@ -63,6 +73,7 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     )
 
     rows = []
+    processed_articles = set()
 
     # --------------------------------------------------
     # Main Logic
@@ -83,40 +94,48 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
         article = str(cn_row["შიდა კოდი"]).strip()
 
         # --------------------------------------------------
-        # Get ALL rows of this article from cnobari
+        # Prevent duplicate article generation
+        # --------------------------------------------------
+
+        if article in processed_articles:
+            continue
+
+        processed_articles.add(article)
+
+        # --------------------------------------------------
+        # Get ALL rows of this article
         # --------------------------------------------------
 
         article_rows = cnobari_df[
             cnobari_df["შიდა კოდი"] == article
         ].copy()
 
-        # --------------------------------------------------
-        # Group by color
-        # --------------------------------------------------
-
         article_rows = article_rows.sort_values(["ფერი", "ზომა"])
 
         # --------------------------------------------------
-        # Move witeli barcode row to the top
+        # Move red barcode to the top
         # --------------------------------------------------
 
         if witeli_barcode in article_rows["შტრიხკოდი"].values:
+
             witeli_part = article_rows[
                 article_rows["შტრიხკოდი"] == witeli_barcode
-                ]
+            ]
 
             other_part = article_rows[
                 article_rows["შტრიხკოდი"] != witeli_barcode
-                ]
+            ]
 
             article_rows = pd.concat([witeli_part, other_part])
 
+        # --------------------------------------------------
+        # Generate rows
+        # --------------------------------------------------
 
         for _, row in article_rows.iterrows():
 
             bc = row["შტრიხკოდი"]
 
-            # LIVE stock lookup
             if bc in live_barcode_lookup.index:
                 live_stock = live_barcode_lookup.loc[bc].get("live ნაშთი", "")
             else:
@@ -150,7 +169,10 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
 
             rows.append(result_row)
 
-        # empty separator
+        # --------------------------------------------------
+        # Separator row
+        # --------------------------------------------------
+
         rows.append({
             "შტრიხკოდი": "",
             "შიდა კოდი": "",

@@ -29,7 +29,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="w-full bg-sky-300 text-slate-700">
+    <nav className="sticky top-0 w-full bg-sky-300 text-slate-700">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Left side */}
         <Link
@@ -60,9 +60,6 @@ export default function Navbar() {
             Home
           </Link>
 
-          <a href="#" className="text-slate-700 hover:text-white transition">
-            Documentation
-          </a>
         </div>
       </div>
     </nav>
