@@ -23,9 +23,21 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     cnobari_bytes = await cnobari_file.read()
     live_bytes = await live_file.read()
 
-    witeli_df = pd.read_excel(BytesIO(witeli_bytes))
-    cnobari_df = pd.read_excel(BytesIO(cnobari_bytes))
-    live_df = pd.read_excel(BytesIO(live_bytes))
+    try:
+        witeli_df = pd.read_excel(BytesIO(witeli_bytes))
+        cnobari_df = pd.read_excel(BytesIO(cnobari_bytes))
+        live_df = pd.read_excel(BytesIO(live_bytes))
+    except Exception:
+        raise ValueError("Excel ფაილის წაკითხვა ვერ მოხერხდა, არწმუნდით რომ სწორ ფაილს ტვირთავთ")
+
+    if witeli_df.empty:
+        raise ValueError("წითელი ნაშთების ფაილი ცარიელია. დარწმუნდით რომ სწორ ფაილს ტვირთავთ ან წითელი ნაშთები არ გაქვთ")
+
+    if cnobari_df.empty:
+        raise ValueError("ცნობარის ფაილი ცარიელია. დარწმუნდით რომ სწორ ფაილს ტვირთავთ")
+
+    if live_df.empty:
+        raise ValueError("Live ნაშთების ფაილი ცარიელია. დარწმუნდით რომ სწორ ფაილს ტვირთავთ")
 
     # --------------------------------------------------
     # Normalize column names
@@ -34,6 +46,70 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     witeli_df = normalize_columns(witeli_df)
     cnobari_df = normalize_columns(cnobari_df)
     live_df = normalize_columns(live_df)
+
+    # --------------------------------------------------
+    # Validate file types (UNIQUE COLUMN CHECK)
+    # --------------------------------------------------
+
+    # witeli must contain "ოპერაცია"
+    if "ოპერაცია" not in witeli_df.columns:
+        raise ValueError(
+            "წითელი ნაშთების ველში ატვირთულია არასწორი ფაილი. ატვირთეთ სწორი 'წითელი ნაშთები'"
+        )
+
+    # cnobari must contain "Inside_Composition"
+    if "Inside_Composition" not in cnobari_df.columns:
+        raise ValueError(
+            "ცნობარის ველში ატვირთულია არასწორი ფაილი. ატვირთეთ სწორი 'ცნობარი'"
+        )
+
+    # live must contain "live ნაშთი"
+    if "live ნაშთი" not in live_df.columns:
+        raise ValueError(
+            "Live ნაშთების ველში ატვირთულია არასწორი ფაილი. ატვირთეთ სწორი 'Live ნაშთები'"
+        )
+
+    # --------------------------------------------------
+    # Detect WRONG file placement
+    # --------------------------------------------------
+
+    if "live ნაშთი" in witeli_df.columns:
+        raise ValueError("წითელი ნაშთების ველში ატვირთულია Live ნაშთების ფაილი")
+
+    if "live ნაშთი" in cnobari_df.columns:
+        raise ValueError("ცნობარის ველში ატვირთულია Live ნაშთების ფაილი")
+
+    if "ოპერაცია" in live_df.columns:
+        raise ValueError("Live ნაშთების ველში ატვირთულია წითელი ნაშთების ფაილი")
+
+    if "Inside_Composition" in live_df.columns:
+        raise ValueError("Live ნაშთების ველში ატვირთულია ცნობარის ფაილი")
+
+    # --------------------------------------------------
+    # Validate required columns
+    # --------------------------------------------------
+
+    required_witeli_cols = ["შტრიხკოდი", "რაოდენობა"]
+    required_cnobari_cols = ["შტრიხკოდი", "შიდა კოდი"]
+    required_live_cols = ["შტრიხკოდი", "live ნაშთი"]
+
+    for col in required_witeli_cols:
+        if col not in witeli_df.columns:
+            raise ValueError(
+                f"წითელი ნაშთების ფაილში სვეტი '{col}' ვერ მოიძებნა"
+            )
+
+    for col in required_cnobari_cols:
+        if col not in cnobari_df.columns:
+            raise ValueError(
+                f"ცნობარის ფაილში სვეტი '{col}' ვერ მოიძებნა"
+            )
+
+    for col in required_live_cols:
+        if col not in live_df.columns:
+            raise ValueError(
+                f"Live ნაშთების ფაილში სვეტი '{col}' ვერ მოიძებნა"
+            )
 
     # --------------------------------------------------
     # Force types
@@ -46,11 +122,10 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     live_df = force_numeric(live_df, ["live ნაშთი"])
     witeli_df = force_numeric(witeli_df, ["რაოდენობა"])
 
-    # extract reconciliation date
     recon_warehouse = witeli_df["საწყობის დასახელება"].iloc[0][10:] if "საწყობის დასახელება" in witeli_df.columns else ""
 
     # --------------------------------------------------
-    # Aggregate red stock (IMPORTANT FIX)
+    # Aggregate red stock
     # --------------------------------------------------
 
     witeli_df = (
@@ -86,7 +161,7 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     # --------------------------------------------------
 
     for _, witeli_row in witeli_df.iterrows():
-        # date for this barcode
+
         row_date = ""
 
         if "თარიღი" in witeli_df.columns and pd.notna(witeli_row.get("თარიღი")):
@@ -98,35 +173,19 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
         if witeli_barcode not in cnobari_barcode_lookup.index:
             continue
 
-        # --------------------------------------------------
-        # Get article code
-        # --------------------------------------------------
-
         cn_row = cnobari_barcode_lookup.loc[witeli_barcode]
         article = str(cn_row["შიდა კოდი"]).strip()
-
-        # --------------------------------------------------
-        # Prevent duplicate article generation
-        # --------------------------------------------------
 
         if article in processed_articles:
             continue
 
         processed_articles.add(article)
 
-        # --------------------------------------------------
-        # Get ALL rows of this article
-        # --------------------------------------------------
-
         article_rows = cnobari_df[
             cnobari_df["შიდა კოდი"] == article
         ].copy()
 
         article_rows = article_rows.sort_values(["ფერი", "ზომა"])
-
-        # --------------------------------------------------
-        # Move red barcode to the top
-        # --------------------------------------------------
 
         if witeli_barcode in article_rows["შტრიხკოდი"].values:
 
@@ -139,10 +198,6 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
             ]
 
             article_rows = pd.concat([witeli_part, other_part])
-
-        # --------------------------------------------------
-        # Generate rows
-        # --------------------------------------------------
 
         for _, row in article_rows.iterrows():
 
@@ -158,32 +213,22 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
                 "საწყობი": recon_warehouse,
                 "შტრიხკოდი": bc,
                 "შიდა კოდი": article,
-
                 "საქონელი": safe_get(row, "დასახელება"),
                 "კატეგორია": safe_get(row, "კატეგორია"),
-
                 "ტიპი": safe_get(row, "ტიპი"),
                 "ზომა": safe_get(row, "ზომა"),
                 "ფერი": safe_get(row, "ფერი"),
-
                 "სქესი": safe_get(row, "სქესი"),
                 "საცალო ფასი": safe_get(row, "ფასი"),
-
                 "ნაშთი-APEX": live_stock,
-
                 "წითელი ნაშთი":
                     witeli_row["რაოდენობა"]
                     if bc == witeli_barcode else "",
-
                 "რეალური ნაშთი": "",
                 "DIFF": "",
             }
 
             rows.append(result_row)
-
-        # --------------------------------------------------
-        # Separator row
-        # --------------------------------------------------
 
         rows.append({
             "შტრიხკოდი": "",
@@ -202,10 +247,6 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
         })
 
     result_df = pd.DataFrame(rows)
-
-    # --------------------------------------------------
-    # Generate Excel
-    # --------------------------------------------------
 
     output = BytesIO()
 

@@ -55,16 +55,16 @@ export default function Home() {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        "https://witeli-nashtebi.onrender.com/api/upload",
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
+      const response = await fetch("https://witeli-nashtebi.onrender.com/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-      if (!response.ok) throw new Error("Generation failed");
-
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.detail || "ფაილის დამუშავება ვერ მოხერხდა");
+        return;
+      }
       const blob = await response.blob();
 
       const url = window.URL.createObjectURL(blob);
@@ -107,7 +107,6 @@ export default function Home() {
       }
 
       const branchSlug = branch.name.replaceAll(" ", "-").toLowerCase();
-
 
       const today = new Date().toISOString().split("T")[0];
 
