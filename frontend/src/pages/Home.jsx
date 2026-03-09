@@ -1,6 +1,7 @@
 // frontend/src/pages/Home.jsx
 import { useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useBranch } from "../context/BranchContext";
 
 export default function Home() {
   const [witeli, setWiteli] = useState(null);
@@ -12,7 +13,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const branchId = localStorage.getItem("selectedBranch");
+  const { branch } = useBranch();
+  const branchId = branch?.id;
 
   const videoSectionRef = useRef(null);
   // --------------------------------------------
@@ -27,8 +29,21 @@ export default function Home() {
   };
 
   const handleGenerate = async () => {
-    if (!witeli || !cnobari || !live) {
-      alert("Please upload all 3 files.");
+    if (!branchId) {
+      alert("გთხოვთ აირჩიოთ ფილიალი.");
+      return;
+    }
+
+    if (!witeli) {
+      alert("გთხოვს აირჩიეთ წითელი ნაშთების ექსელის ფაილი");
+      return;
+    }
+    if (!cnobari) {
+      alert("გთხოვს აირჩიეთ ცნობარის ექსელის ფაილი");
+      return;
+    }
+    if (!live) {
+      alert("გთხოვს აირჩიეთ live ნაშთების ექსელის ფაილი");
       return;
     }
 
@@ -41,7 +56,7 @@ export default function Home() {
       setLoading(true);
 
       const response = await fetch(
-        "https://witeli-nashtebi.onrender.com/api/upload",
+        "http://127.0.0.1:8000/api/upload",
         {
           method: "POST",
           body: formData,
@@ -74,28 +89,25 @@ export default function Home() {
 
   const handleUploadResult = async () => {
     if (!finalFile) {
-      alert("Please upload the final Excel file.");
+      alert("გთხოვთ აირჩიეთ საბოლლო შედეგის ფაილი თქვენ მიერ გადათვლილი");
       return;
     }
 
     if (!branchId) {
-      alert("Please select branch from navbar.");
+      alert("გთხოვთ აირჩიეთ ფილიალი");
       return;
     }
 
     try {
       setUploading(true);
 
-      const branchData = localStorage.getItem("selectedBranchData");
-
-      if (!branchData) {
+      if (!branch) {
         alert("Branch information missing.");
         return;
       }
 
-      const branch = JSON.parse(branchData);
-
       const branchSlug = branch.name.replaceAll(" ", "-").toLowerCase();
+
 
       const today = new Date().toISOString().split("T")[0];
 
@@ -139,11 +151,9 @@ export default function Home() {
             </span>
           </p>
         </div>
-
         {/* ----------------------- */}
         {/* Input Files */}
         {/* ----------------------- */}
-
         <div className="space-y-4">
           <div>
             <label className="block text-sm text-slate-800 mb-1">
@@ -177,27 +187,26 @@ export default function Home() {
               type="file"
               accept=".xlsx"
               onChange={(e) => setLive(e.target.files[0])}
-              className="w-full text-sm file:bg-lime-500 file:border-0 file:text-white file:px-4 file:py-2 file:rounded-md file:mr-4 bg-lime-200 rounded-md p-2"
+              className="mb-8 w-full text-sm file:bg-lime-500 file:border-0 file:text-white file:px-4 file:py-2 file:rounded-md file:mr-4 bg-lime-200 rounded-md p-2"
             />
           </div>
         </div>
-
         {/* ----------------------- */}
         {/* Generate Excel */}
         {/* ----------------------- */}
-
+        {!branchId && (
+          <p className="text-rose-500">გთხოვთ აირჩიეთ ფილიალი</p>
+        )}{" "}
         <button
           onClick={handleGenerate}
-          disabled={loading}
-          className="mt-8 w-full bg-lime-700 text-slate-100 hover:bg-lime-900 hover:text-white transition rounded-lg py-3 text-sm font-medium disabled:opacity-50 cursor-pointer"
+          disabled={loading || !branchId}
+          className=" w-full bg-lime-700 text-slate-100 hover:bg-lime-900 hover:text-white transition rounded-lg py-3 text-sm font-medium disabled:opacity-50 cursor-pointer"
         >
           {loading ? "მუშაოვდება (დაელოდეთ) ..." : "აღწერის ფაილის გენერირება"}
         </button>
-
         {/* ----------------------- */}
         {/* Upload Final Result */}
         {/* ----------------------- */}
-
         <div className="mt-10 border-t pt-6">
           <h2 className="text-2xl font-semibold text-slate-800 mb-2">
             შედეგები
@@ -224,14 +233,14 @@ export default function Home() {
               type="file"
               accept=".xlsx"
               onChange={(e) => setFinalFile(e.target.files[0])}
-              className="w-full text-sm file:bg-indigo-500 file:border-0 file:text-white file:px-4 file:py-2 file:rounded-md file:mr-4 bg-indigo-100 rounded-md p-2"
+              className="mb-4 w-full text-sm file:bg-indigo-500 file:border-0 file:text-white file:px-4 file:py-2 file:rounded-md file:mr-4 bg-indigo-100 rounded-md p-2"
             />
           </div>
-
+          {!branchId && <p className="text-rose-500">გთხოვთ აირჩიეთ ფილიალი</p>}{" "}
           <button
             onClick={handleUploadResult}
-            disabled={uploading}
-            className="mt-4 w-full bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg py-3 text-sm font-medium disabled:opacity-50 cursor-pointer"
+            disabled={uploading || !branchId}
+            className=" w-full bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg py-3 text-sm font-medium disabled:opacity-50 cursor-pointer"
           >
             {uploading ? "იტვირთება..." : "შედეგების ფაილის გაგზავნა"}
           </button>

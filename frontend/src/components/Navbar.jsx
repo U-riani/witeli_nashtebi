@@ -1,66 +1,47 @@
 // frontend/src/components/Navbar.jsx
 
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useBranch } from "../context/BranchContext";
 import { branches } from "../data/branches";
 
 export default function Navbar() {
-  const [selectedBranch, setSelectedBranch] = useState("");
+  const { branch, updateBranch } = useBranch();
+  const SelectBranchId = branch?.id;
 
-  // Load saved branch on first load
-  useEffect(() => {
-    const savedBranch = localStorage.getItem("selectedBranch");
-
-    if (savedBranch) {
-      setSelectedBranch(savedBranch);
-    }
-  }, []);
-
-  // Save to localStorage when changed
   const handleBranchChange = (e) => {
     const branchId = e.target.value;
 
-    const branch = branches.find((b) => b.id.toString() === branchId);
+    const branchData = branches.find((b) => b.id.toString() === branchId);
 
-    setSelectedBranch(branchId);
-
-    localStorage.setItem("selectedBranch", branchId);
-    localStorage.setItem("selectedBranchData", JSON.stringify(branch));
+    updateBranch(branchData);
   };
 
   return (
-    <nav className="sticky top-0 w-full bg-sky-300 text-slate-700 py-1">
-      <div className="max-w-6xl mx-auto px-6 h-16 grid grid-cols-3 grid-rows-1">
-        {/* Left side */}
-        <Link
-          to="/"
-          className="flex items-center text-start text-lg font-semibold tracking-tight hover:text-indigo-600 transition"
-        >
+    <nav className="sticky top-0 w-full bg-sky-300 text-slate-700 py-1 z-50">
+      <div className="max-w-6xl mx-auto px-6 h-16 grid grid-cols-3">
+        <Link to="/" className="flex items-center text-lg font-semibold">
           წითელი ნაშთები
         </Link>
 
-        {/* Center branch selector */}
-        <div className="flex items-center">
+        <div className="flex flex-col items-center justify-center">
+          {!SelectBranchId && <p className="text-xl text-rose-500">გთხოვთ აირჩიეთ ფილიალი</p>}{" "}
           <select
-            value={selectedBranch}
+            value={branch?.id || ""}
             onChange={handleBranchChange}
-            className="px-3 py-2 rounded-md border border-slate-300 bg-white text-sm"
+            className="px-3 py-2 rounded-md border bg-white text-sm"
           >
-            <option value="">Select Branch</option>
+            <option value="">აირჩიეთ ფილიალი</option>
 
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>
-                {branch.name} ({branch.brand})
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name} ({b.brand})
               </option>
             ))}
           </select>
         </div>
 
-        {/* Right side */}
-        <div className="flex justify-end items-center gap-6 text-sm">
-          <Link to="/" className=" text-slate-700 hover:text-white transition">
-            Home
-          </Link>
+        <div className="flex justify-end items-center">
+          <Link to="/">Home</Link>
         </div>
       </div>
     </nav>

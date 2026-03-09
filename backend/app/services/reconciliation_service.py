@@ -47,8 +47,6 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     witeli_df = force_numeric(witeli_df, ["რაოდენობა"])
 
     # extract reconciliation date
-
-
     recon_warehouse = witeli_df["საწყობის დასახელება"].iloc[0][10:] if "საწყობის დასახელება" in witeli_df.columns else ""
 
     # --------------------------------------------------
