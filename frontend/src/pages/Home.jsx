@@ -41,7 +41,7 @@ export default function Home() {
       setLoading(true);
 
       const response = await fetch(
-        "https://witeli-nashtebi.netlify.app/api/upload",
+        "https://witeli-nashtebi.onrender.com/api/upload",
         {
           method: "POST",
           body: formData,

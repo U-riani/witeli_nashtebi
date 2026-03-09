@@ -29,37 +29,38 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 w-full bg-sky-300 text-slate-700">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <nav className="sticky top-0 w-full bg-sky-300 text-slate-700 py-1">
+      <div className="max-w-6xl mx-auto px-6 h-16 grid grid-cols-3 grid-rows-1">
         {/* Left side */}
         <Link
           to="/"
-          className="text-lg font-semibold tracking-tight hover:text-indigo-600 transition"
+          className="flex items-center text-start text-lg font-semibold tracking-tight hover:text-indigo-600 transition"
         >
           წითელი ნაშთები
         </Link>
 
         {/* Center branch selector */}
-        <select
-          value={selectedBranch}
-          onChange={handleBranchChange}
-          className="px-3 py-2 rounded-md border border-slate-300 bg-white text-sm"
-        >
-          <option value="">Select Branch</option>
+        <div className="flex items-center">
+          <select
+            value={selectedBranch}
+            onChange={handleBranchChange}
+            className="px-3 py-2 rounded-md border border-slate-300 bg-white text-sm"
+          >
+            <option value="">Select Branch</option>
 
-          {branches.map((branch) => (
-            <option key={branch.id} value={branch.id}>
-              {branch.name} ({branch.brand})
-            </option>
-          ))}
-        </select>
+            {branches.map((branch) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name} ({branch.brand})
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-6 text-sm">
-          <Link to="/" className="text-slate-700 hover:text-white transition">
+        <div className="flex justify-end items-center gap-6 text-sm">
+          <Link to="/" className=" text-slate-700 hover:text-white transition">
             Home
           </Link>
-
         </div>
       </div>
     </nav>

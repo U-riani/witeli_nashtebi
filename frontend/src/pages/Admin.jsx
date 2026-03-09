@@ -75,7 +75,7 @@ export default function Admin() {
         .getPublicUrl(file.path);
 
       const response = await fetch(
-        "https://witeli-nashtebi.netlify.app/api/auto-align",
+        "https://witeli-nashtebi.onrender.com/api/auto-align",
         {
           method: "POST",
           headers: {
