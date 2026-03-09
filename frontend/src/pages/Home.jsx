@@ -56,7 +56,7 @@ export default function Home() {
       setLoading(true);
 
       const response = await fetch(
-        "http://127.0.0.1:8000/api/upload",
+        "https://witeli-nashtebi.onrender.com/api/upload",
         {
           method: "POST",
           body: formData,
