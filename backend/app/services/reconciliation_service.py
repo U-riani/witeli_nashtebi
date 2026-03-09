@@ -46,6 +46,11 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     live_df = force_numeric(live_df, ["live ნაშთი"])
     witeli_df = force_numeric(witeli_df, ["რაოდენობა"])
 
+    # extract reconciliation date
+
+
+    recon_warehouse = witeli_df["საწყობის დასახელება"].iloc[0][10:] if "საწყობის დასახელება" in witeli_df.columns else ""
+
     # --------------------------------------------------
     # Aggregate red stock (IMPORTANT FIX)
     # --------------------------------------------------
@@ -53,7 +58,10 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     witeli_df = (
         witeli_df
         .groupby("შტრიხკოდი", as_index=False)
-        .agg({"რაოდენობა": "sum"})
+        .agg({
+            "რაოდენობა": "sum",
+            "თარიღი": "first"
+        })
     )
 
     # --------------------------------------------------
@@ -80,6 +88,12 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
     # --------------------------------------------------
 
     for _, witeli_row in witeli_df.iterrows():
+        # date for this barcode
+        row_date = ""
+
+        if "თარიღი" in witeli_df.columns and pd.notna(witeli_row.get("თარიღი")):
+            d = pd.to_datetime(witeli_row["თარიღი"])
+            row_date = f"{d.day}/{d.month}/{d.year}"
 
         witeli_barcode = witeli_row["შტრიხკოდი"]
 
@@ -142,7 +156,8 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
                 live_stock = ""
 
             result_row = {
-
+                "თარიღი": row_date,
+                "საწყობი": recon_warehouse,
                 "შტრიხკოდი": bc,
                 "შიდა კოდი": article,
 
@@ -164,7 +179,6 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
 
                 "რეალური ნაშთი": "",
                 "DIFF": "",
-                "ფერის არტიკული": ""
             }
 
             rows.append(result_row)
@@ -187,7 +201,6 @@ async def process_inventory(witeli_file, cnobari_file, live_file):
             "წითელი ნაშთი": "",
             "რეალური ნაშთი": "",
             "DIFF": "",
-            "ფერის არტიკული": ""
         })
 
     result_df = pd.DataFrame(rows)

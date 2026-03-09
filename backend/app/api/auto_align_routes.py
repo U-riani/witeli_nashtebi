@@ -55,6 +55,10 @@ async def auto_align(data: dict):
         priority_barcode = red_row["შტრიხკოდი"]
         red_qty = int(red_row["წითელი ნაშთი"])
 
+        # if red barcode real stock is empty → treat as 0
+        if pd.isna(red_row["რეალური ნაშთი"]):
+            df.loc[df["შტრიხკოდი"] == priority_barcode, "რეალური ნაშთი"] = 0
+
         print("PRIORITY BARCODE:", priority_barcode)
         print("RED QTY:", red_qty)
 
@@ -72,9 +76,34 @@ async def auto_align(data: dict):
             real = row["რეალური ნაშთი"]
             apex = row["ნაშთი-APEX"]
 
-            if pd.isna(real) or pd.isna(apex):
+            # both empty → skip
+            if pd.isna(apex) and pd.isna(real):
                 continue
 
+            # apex empty but real exists
+            if pd.isna(apex) and not pd.isna(real):
+
+                # if real = 0 → skip
+                if real == 0:
+                    continue
+
+                # treat apex as 0
+                apex = 0
+
+            # apex must exist
+            if pd.isna(apex):
+                continue
+
+            # if this is the priority barcode and real is empty → treat as 0
+            if row["შტრიხკოდი"] == priority_barcode and pd.isna(real):
+                real = 0
+
+            # if another barcode and real is empty → store didn't count it
+            elif pd.isna(real):
+                print("another barcode and real is empty → store didn't count it", real)
+                continue
+
+            print("real", real)
             diff = apex - real
 
             # APEX bigger than real → stock available
