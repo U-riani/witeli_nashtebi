@@ -78,7 +78,7 @@ export default function Admin() {
         .getPublicUrl(file.path);
 
       const response = await fetch(
-        "http://127.0.0.1:8000/api/auto-align",
+        "https://witeli-nashtebi.onrender.com/api/auto-align",
         {
           method: "POST",
           headers: {
