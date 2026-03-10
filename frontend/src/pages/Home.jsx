@@ -55,10 +55,13 @@ export default function Home() {
     try {
       setLoading(true);
 
-      const response = await fetch("https://witeli-nashtebi.onrender.com/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/upload",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -203,6 +206,7 @@ export default function Home() {
         >
           {loading ? "მუშაოვდება (დაელოდეთ) ..." : "აღწერის ფაილის გენერირება"}
         </button>
+        {loading && <p className="text-center pt-2 text-gray-500">პროცესი შეიძლება გაგრძელდეს რამდენიმე წუთი</p>}
         {/* ----------------------- */}
         {/* Upload Final Result */}
         {/* ----------------------- */}
